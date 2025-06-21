@@ -2,6 +2,9 @@
 
 Echoroom is an intelligent, web-based assistant that transcribes meeting audio and allows users to ask questions about what was discussed — even long after the meeting has ended.
 
+![{7960308C-9A63-42A8-A74E-8DA80AB73567}](https://github.com/user-attachments/assets/c49b8e98-2c6a-430c-9ede-90befeb73e0a)
+
+
 🧩 Problem
 
 Meetings often contain valuable insights, decisions, and action items, but most of that information gets lost once the call ends. Manually reviewing recordings or notes is time-consuming, inefficient, and error-prone.
