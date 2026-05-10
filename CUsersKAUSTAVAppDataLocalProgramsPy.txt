@@ -1,0 +1,26 @@
+C:\Users\KAUSTAV\AppData\Local\Programs\Python\Python313\python.exe C:\Users\KAUSTAV\OneDrive\Desktop\EchoRoom\qa_from_transcript.py 
+C:\Users\KAUSTAV\OneDrive\Desktop\EchoRoom\qa_from_transcript.py:2: LangChainDeprecationWarning: Importing FAISS from langchain.vectorstores is deprecated. Please replace deprecated imports:
+
+>> from langchain.vectorstores import FAISS
+
+with new imports of:
+
+>> from langchain_community.vectorstores import FAISS
+You can use the langchain cli to **automatically** upgrade many imports. Please see documentation here <https://python.langchain.com/docs/versions/v0_2/>
+  from langchain.vectorstores import FAISS
+C:\Users\KAUSTAV\AppData\Local\Programs\Python\Python313\Lib\site-packages\langchain\chat_models\__init__.py:33: LangChainDeprecationWarning: Importing chat models from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.chat_models import ChatOpenAI`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\KAUSTAV\AppData\Local\Programs\Python\Python313\Lib\site-packages\langchain\chat_models\__init__.py:33: LangChainDeprecationWarning: Importing chat models from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.chat_models import ChatOpenAI`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+Traceback (most recent call last):
+  File "C:\Users\KAUSTAV\OneDrive\Desktop\EchoRoom\qa_from_transcript.py", line 83, in <module>
+    raise EnvironmentError("OPENAI_API_KEY is not set in the environment.")
+OSError: OPENAI_API_KEY is not set in the environment.

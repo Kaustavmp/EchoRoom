@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EchoRoom – Live Meeting Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #09090f;
+    --surface: #0f0f1a;
+    --surface2: #141428;
+    --border: rgba(255,255,255,0.07);
+    --accent: #6c63ff;
+    --accent2: #00e5b0;
+    --accent3: #ff6b6b;
+    --accent4: #ffd93d;
+    --text: #e8e8f0;
+    --text-dim: #666680;
+    --text-muted: #33334a;
+    --positive: #00e5b0;
+    --negative: #ff6b6b;
+    --neutral: #6c63ff;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -30%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(108,99,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -20%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(0,229,176,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Layout */
+  .app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(9,9,15,0.9);
+    backdrop-filter: blur(16px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #6c63ff, #00e5b0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .status-bar { display: flex; align-items: center; gap: 20px; }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,107,107,0.12);
+    border: 1px solid rgba(255,107,107,0.25);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ff6b6b;
+    letter-spacing: 0.5px;
+  }
+
+  .live-badge.active .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #ff6b6b;
+    animation: pulse-dot 1.2s ease-in-out infinite;
+  }
+
+  .live-badge.idle { color: var(--text-dim); border-color: var(--border); background: transparent; }
+  .live-badge.idle .dot { background: var(--text-dim); animation: none; }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+
+  /* Join form */
+  .join-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  .join-card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px;
+  }
+
+  .join-card h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .join-card p {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  input, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    margin-bottom: 18px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 13px 24px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn:hover { background: #7b74ff; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn.danger { background: var(--accent3); }
+  .btn.danger:hover { background: #ff8585; }
+  .btn.sm { width: auto; padding: 8px 16px; font-size: 13px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Main dashboard grid */
+  .dashboard {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    grid-template-rows: auto 1fr;
+    gap: 1px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  .panel {
+    background: var(--bg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  /* Transcript */
+  .transcript-line {
+    margin-bottom: 14px;
+    animation: fade-in 0.3s ease;
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .speaker-tag {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .transcript-text {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text);
+  }
+
+  .caption-tag { opacity: 0.6; }
+
+  .ts-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-left: 8px;
+  }
+
+  /* Speaker colors */
+  .sp-0 { color: #6c63ff; }
+  .sp-1 { color: #00e5b0; }
+  .sp-2 { color: #ffd93d; }
+  .sp-3 { color: #ff6b6b; }
+  .sp-4 { color: #c77dff; }
+  .sp-5 { color: #4cc9f0; }
+
+  /* Right panel */
+  .right-panel {
+    grid-row: 1 / 3;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  /* Summary card */
+  .summary-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    min-height: 60px;
+  }
+
+  .summary-card.empty { color: var(--text-muted); font-style: italic; }
+
+  /* Action items */
+  .action-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+    animation: fade-in 0.3s ease;
+  }
+
+  .action-priority {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 5px;
+  }
+
+  .priority-high { background: var(--accent3); }
+  .priority-medium { background: var(--accent4); }
+  .priority-low { background: var(--text-dim); }
+
+  .action-content { flex: 1; }
+  .action-task { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+  .action-meta { font-size: 11px; color: var(--text-dim); }
+
+  /* Sentiment timeline */
+  .sentiment-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    animation: fade-in 0.3s ease;
+  }
+
+  .sentiment-icon { font-size: 16px; flex-shrink: 0; }
+
+  .sentiment-body { flex: 1; }
+  .sentiment-meta { font-size: 11px; color: var(--text-dim); margin-bottom: 3px; }
+  .sentiment-text { font-size: 12px; color: var(--text); font-style: italic; }
+
+  /* Speaker stats */
+  .speaker-stat { margin-bottom: 12px; }
+  .speaker-stat-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .speaker-stat-name { font-size: 13px; font-weight: 500; }
+  .speaker-stat-words { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  /* Q&A Panel */
+  .qa-panel {
+    display: flex;
+    flex-direction: column;
+    height: 260px;
+  }
+
+  .qa-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .qa-msg {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 90%;
+  }
+
+  .qa-msg.user {
+    align-self: flex-end;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 10px 10px 2px 10px;
+    padding: 8px 12px;
+  }
+
+  .qa-msg.bot {
+    align-self: flex-start;
+    background: var(--surface2);
+    color: var(--text);
+    border-radius: 10px 10px 10px 2px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+  }
+
+  .qa-msg.thinking { color: var(--text-dim); font-style: italic; }
+
+  .qa-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .qa-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    margin: 0;
+  }
+
+  .qa-input:focus { border-color: var(--accent); }
+
+  /* Topics */
+  .topic-chip {
+    display: inline-block;
+    background: rgba(108,99,255,0.12);
+    border: 1px solid rgba(108,99,255,0.2);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--accent);
+    margin: 3px;
+  }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 2px; }
+
+  .tab {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: all 0.15s;
+    border: none;
+    background: transparent;
+  }
+
+  .tab.active { background: var(--surface2); color: var(--text); }
+
+  /* Decisions */
+  .decision {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(0,229,176,0.06);
+    border: 1px solid rgba(0,229,176,0.15);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--text);
+    animation: fade-in 0.3s ease;
+  }
+
+  .decision::before { content: '✓'; color: var(--accent2); font-weight: 700; }
+
+  /* Top stats row */
+  .stats-row {
+    grid-column: 1 / 2;
+    display: flex;
+    gap: 1px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .stat-card {
+    flex: 1;
+    background: var(--bg);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .stat-icon { font-size: 22px; }
+
+  .stat-label { font-size: 11px; color: var(--text-dim); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+
+  /* Empty states */
+  .empty-state {
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 24px;
+    font-style: italic;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">EchoRoom</div>
+    <div class="status-bar">
+      <div class="live-badge idle" id="live-badge">
+        <div class="dot"></div>
+        <span id="live-label">IDLE</span>
+      </div>
+      <div class="timer" id="timer">00:00:00</div>
+      <button class="btn danger sm hidden" id="stop-btn" onclick="stopSession()">■ Stop</button>
+    </div>
+  </header>
+
+  <!-- Join Panel -->
+  <div class="join-panel" id="join-panel">
+    <div class="join-card">
+      <h2>Join a Meeting</h2>
+      <p>EchoRoom will silently join, transcribe, and surface insights in real time.</p>
+
+      <label>Meeting URL</label>
+      <input type="url" id="meeting-url" placeholder="https://meet.google.com/abc-def-ghi" />
+
+      <label>Bot Display Name</label>
+      <input type="text" id="bot-name" value="EchoRoom Bot" />
+
+      <label>Whisper Model</label>
+      <select id="whisper-model">
+        <option value="tiny">Tiny — fastest, lower accuracy</option>
+        <option value="base" selected>Base — recommended</option>
+        <option value="small">Small — better accuracy</option>
+        <option value="medium">Medium — high accuracy</option>
+        <option value="large">Large — best quality</option>
+      </select>
+
+      <label>API Server</label>
+      <input type="text" id="api-url" value="http://localhost:8000" />
+
+      <button class="btn" onclick="startSession()">🎙 Join Meeting</button>
+    </div>
+  </div>
+
+  <!-- Dashboard (hidden until session starts) -->
+  <div class="dashboard hidden" id="dashboard">
+
+    <!-- Stats row (top, left column) -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">🗣</div>
+        <div>
+          <div class="stat-label">Speakers</div>
+          <div class="stat-value" id="stat-speakers">0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📝</div>
+        <div>
+          <div class="stat-label">Lines</div>
+          <div class="stat-value" id="stat-lines">0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div>
+          <div class="stat-label">Action Items</div>
+          <div class="stat-value" id="stat-actions">0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💡</div>
+        <div>
+          <div class="stat-label">Topics</div>
+          <div class="stat-value" id="stat-topics">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live transcript (left) -->
+    <div class="panel" id="transcript-panel">
+      <div class="panel-header">
+        <span class="panel-title">Live Transcript</span>
+      </div>
+      <div class="panel-body" id="transcript-body">
+        <div class="empty-state">Waiting for speech...</div>
+      </div>
+    </div>
+
+    <!-- Right sidebar -->
+    <div class="right-panel">
+
+      <!-- Summary -->
+      <div class="panel" style="flex: 0 0 auto;">
+        <div class="panel-header">
+          <span class="panel-title">Summary</span>
+        </div>
+        <div class="panel-body" style="max-height: 120px;">
+          <div class="summary-card empty" id="summary-text">Awaiting transcript...</div>
+        </div>
+      </div>
+
+      <!-- Insights tabs -->
+      <div class="panel" style="flex: 1;">
+        <div class="panel-header">
+          <span class="panel-title">Insights</span>
+          <div class="tabs">
+            <button class="tab active" onclick="switchTab('actions')">Actions</button>
+            <button class="tab" onclick="switchTab('decisions')">Decisions</button>
+            <button class="tab" onclick="switchTab('sentiment')">Mood</button>
+            <button class="tab" onclick="switchTab('speakers')">Speakers</button>
+            <button class="tab" onclick="switchTab('topics')">Topics</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="tab-actions"></div>
+          <div id="tab-decisions" class="hidden"></div>
+          <div id="tab-sentiment" class="hidden"></div>
+          <div id="tab-speakers" class="hidden"></div>
+          <div id="tab-topics" class="hidden"></div>
+        </div>
+      </div>
+
+      <!-- Q&A -->
+      <div class="panel qa-panel">
+        <div class="panel-header">
+          <span class="panel-title">Ask EchoRoom</span>
+        </div>
+        <div class="qa-messages" id="qa-messages">
+          <div class="qa-msg bot">Ask me anything about the meeting...</div>
+        </div>
+        <div class="qa-input-row">
+          <input type="text" class="qa-input" id="qa-input"
+                 placeholder="What did Alice say about the deadline?"
+                 onkeydown="if(event.key==='Enter') sendQuestion()">
+          <button class="btn sm" onclick="sendQuestion()">↑</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let sessionId = null;
+let ws = null;
+let timerInterval = null;
+let startTime = null;
+let transcript = [];
+let speakerColors = {};
+let colorIdx = 0;
+let activeTab = 'actions';
+let insights = { summary:'', key_decisions:[], action_items:[], topics:[], speaker_stats:{}, sentiment_flags:[] };
+
+const API = () => document.getElementById('api-url').value.replace(/\/$/, '');
+
+// ── Session control ────────────────────────────────────────────────────────
+async function startSession() {
+  const url = document.getElementById('meeting-url').value.trim();
+  if (!url) { alert('Please enter a meeting URL.'); return; }
+
+  const body = {
+    meeting_url: url,
+    bot_name: document.getElementById('bot-name').value,
+    whisper_model: document.getElementById('whisper-model').value,
+  };
+
+  try {
+    const res = await fetch(`${API()}/sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    sessionId = data.session_id;
+    showDashboard();
+    connectWebSocket();
+    startTimer();
+    // Poll fallback in case WS isn't available
+    setInterval(pollSession, 5000);
+  } catch (e) {
+    alert('Could not connect to EchoRoom server: ' + e.message);
+  }
+}
+
+async function stopSession() {
+  if (!sessionId) return;
+  await fetch(`${API()}/sessions/${sessionId}/stop`, { method: 'POST' });
+  setLiveStatus(false);
+  clearInterval(timerInterval);
+  if (ws) ws.close();
+}
+
+// ── WebSocket ──────────────────────────────────────────────────────────────
+function connectWebSocket() {
+  const wsUrl = API().replace('http', 'ws') + `/ws/${sessionId}`;
+  ws = new WebSocket(wsUrl);
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'segment' || msg.type === 'caption') {
+      addTranscriptLine(msg.speaker, msg.text, msg.timestamp, msg.type === 'caption');
+    }
+    if (msg.insights) {
+      updateInsights(msg.insights);
+    }
+  };
+
+  ws.onopen = () => setLiveStatus(true);
+  ws.onclose = () => setLiveStatus(false);
+  ws.onerror = () => console.warn('WS error – falling back to polling.');
+}
+
+async function pollSession() {
+  if (!sessionId) return;
+  try {
+    const res = await fetch(`${API()}/sessions/${sessionId}`);
+    const data = await res.json();
+    if (data.insights) updateInsights(data.insights);
+  } catch (e) {}
+}
+
+// ── UI helpers ─────────────────────────────────────────────────────────────
+function showDashboard() {
+  document.getElementById('join-panel').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('stop-btn').classList.remove('hidden');
+}
+
+function setLiveStatus(active) {
+  const badge = document.getElementById('live-badge');
+  badge.className = 'live-badge ' + (active ? 'active' : 'idle');
+  document.getElementById('live-label').textContent = active ? 'LIVE' : 'STOPPED';
+}
+
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now() - startTime) / 1000);
+    const h = String(Math.floor(s / 3600)).padStart(2, '0');
+    const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    const sec = String(s % 60).padStart(2, '0');
+    document.getElementById('timer').textContent = `${h}:${m}:${sec}`;
+  }, 1000);
+}
+
+function getSpeakerColor(speaker) {
+  if (!speakerColors[speaker]) {
+    speakerColors[speaker] = `sp-${colorIdx++ % 6}`;
+  }
+  return speakerColors[speaker];
+}
+
+function addTranscriptLine(speaker, text, timestamp, isCaption) {
+  const body = document.getElementById('transcript-body');
+  const emptyState = body.querySelector('.empty-state');
+  if (emptyState) emptyState.remove();
+
+  transcript.push({ speaker, text, timestamp });
+  document.getElementById('stat-lines').textContent = transcript.length;
+
+  const colorClass = getSpeakerColor(speaker);
+  const time = timestamp ? new Date(timestamp * 1000).toLocaleTimeString() : '';
+
+  const div = document.createElement('div');
+  div.className = 'transcript-line';
+  div.innerHTML = `
+    <div class="speaker-tag ${colorClass} ${isCaption ? 'caption-tag' : ''}">
+      ${escHtml(speaker)}
+      <span class="ts-time">${time}</span>
+    </div>
+    <div class="transcript-text">${escHtml(text)}</div>
+  `;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+function updateInsights(ins) {
+  insights = ins;
+
+  // Summary
+  const summaryEl = document.getElementById('summary-text');
+  if (ins.summary) {
+    summaryEl.textContent = ins.summary;
+    summaryEl.classList.remove('empty');
+  }
+
+  // Stats
+  const speakers = Object.keys(ins.speaker_stats || {}).length;
+  document.getElementById('stat-speakers').textContent = speakers;
+  document.getElementById('stat-actions').textContent = (ins.action_items || []).length;
+  document.getElementById('stat-topics').textContent = (ins.topics || []).length;
+
+  renderActiveTab();
+}
+
+function switchTab(name) {
+  activeTab = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  ['actions','decisions','sentiment','speakers','topics'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('hidden', t !== name);
+  });
+  renderActiveTab();
+}
+
+function renderActiveTab() {
+  const ins = insights;
+  if (activeTab === 'actions') renderActions(ins.action_items || []);
+  if (activeTab === 'decisions') renderDecisions(ins.key_decisions || []);
+  if (activeTab === 'sentiment') renderSentiment(ins.sentiment_flags || []);
+  if (activeTab === 'speakers') renderSpeakers(ins.speaker_stats || {});
+  if (activeTab === 'topics') renderTopics(ins.topics || []);
+}
+
+function renderActions(items) {
+  const el = document.getElementById('tab-actions');
+  if (!items.length) { el.innerHTML = '<div class="empty-state">No action items yet.</div>'; return; }
+  el.innerHTML = items.map(a => `
+    <div class="action-item">
+      <div class="action-priority priority-${a.priority}"></div>
+      <div class="action-content">
+        <div class="action-task">${escHtml(a.task)}</div>
+        <div class="action-meta">
+          ${a.owner !== 'Unknown' ? `👤 ${escHtml(a.owner)}` : ''}
+          ${a.due ? `· 📅 ${escHtml(a.due)}` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderDecisions(items) {
+  const el = document.getElementById('tab-decisions');
+  if (!items.length) { el.innerHTML = '<div class="empty-state">No decisions recorded yet.</div>'; return; }
+  el.innerHTML = items.map(d => `<div class="decision">${escHtml(d)}</div>`).join('');
+}
+
+const SENTIMENT_ICONS = { positive:'😊', negative:'😟', frustrated:'😤', confused:'🤔', excited:'🎉', neutral:'😐' };
+
+function renderSentiment(flags) {
+  const el = document.getElementById('tab-sentiment');
+  if (!flags.length) { el.innerHTML = '<div class="empty-state">No notable sentiment flags yet.</div>'; return; }
+  el.innerHTML = flags.slice().reverse().map(s => `
+    <div class="sentiment-entry">
+      <div class="sentiment-icon">${SENTIMENT_ICONS[s.sentiment] || '💬'}</div>
+      <div class="sentiment-body">
+        <div class="sentiment-meta">${escHtml(s.speaker)} · ${escHtml(s.sentiment)}</div>
+        <div class="sentiment-text">"${escHtml(s.text)}"</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderSpeakers(stats) {
+  const el = document.getElementById('tab-speakers');
+  if (!Object.keys(stats).length) { el.innerHTML = '<div class="empty-state">No speaker data yet.</div>'; return; }
+  const total = Object.values(stats).reduce((a, b) => a + b, 0) || 1;
+  const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+  el.innerHTML = sorted.map(([speaker, words], i) => {
+    const pct = Math.round((words / total) * 100);
+    const colorClass = getSpeakerColor(speaker);
+    return `
+      <div class="speaker-stat">
+        <div class="speaker-stat-header">
+          <span class="speaker-stat-name ${colorClass}">${escHtml(speaker)}</span>
+          <span class="speaker-stat-words">${words} words · ${pct}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${pct}%; background: currentColor;" class="${colorClass}"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTopics(topics) {
+  const el = document.getElementById('tab-topics');
+  if (!topics.length) { el.innerHTML = '<div class="empty-state">Topics will appear here.</div>'; return; }
+  el.innerHTML = topics.map(t => `<span class="topic-chip">${escHtml(t)}</span>`).join('');
+}
+
+// ── Q&A ──────────────────────────────────────────────────────────────────
+async function sendQuestion() {
+  const input = document.getElementById('qa-input');
+  const q = input.value.trim();
+  if (!q || !sessionId) return;
+  input.value = '';
+
+  addQAMsg(q, 'user');
+  const thinking = addQAMsg('Thinking...', 'bot thinking');
+
+  try {
+    const res = await fetch(`${API()}/sessions/${sessionId}/ask`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q }),
+    });
+    const data = await res.json();
+    thinking.remove();
+    addQAMsg(data.answer || 'No answer found.', 'bot');
+  } catch (e) {
+    thinking.remove();
+    addQAMsg('Error: could not reach the server.', 'bot');
+  }
+}
+
+function addQAMsg(text, type) {
+  const box = document.getElementById('qa-messages');
+  const div = document.createElement('div');
+  div.className = 'qa-msg ' + type;
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+
+// ── Demo mode (no server) ─────────────────────────────────────────────────
+// Simulates a live session so you can see the UI in action.
+window.demoMode = function() {
+  showDashboard();
+  setLiveStatus(true);
+  startTimer();
+
+  const lines = [
+    ['Alice', "Good morning everyone. Let's kick off the Q3 planning session."],
+    ['Bob', "Thanks Alice. I wanted to raise the infrastructure migration first."],
+    ['Alice', "Agreed. The deadline is the 15th — Bob can you own that?"],
+    ['Carol', "I can help Bob with the testing phase if needed."],
+    ['Bob', "That would be great Carol, thank you!"],
+    ['Alice', "Perfect. Let's also discuss the new onboarding flow."],
+    ['Carol', "I'm a bit confused about the timeline for that one."],
+    ['Alice', "Fair point. We'll push it to next sprint. Agreed?"],
+    ['Bob', "Agreed."],
+    ['Carol', "Works for me!"],
+  ];
+
+  let i = 0;
+  function tick() {
+    if (i >= lines.length) return;
+    const [speaker, text] = lines[i++];
+    addTranscriptLine(speaker, text, Date.now() / 1000, false);
+
+    // Fake incremental insights
+    updateInsights({
+      summary: i > 3 ? "The team is planning Q3 initiatives, focusing on infrastructure migration and a new onboarding flow." : "",
+      key_decisions: i > 7 ? ["Onboarding flow pushed to next sprint"] : [],
+      action_items: i > 4 ? [
+        { owner: "Bob", task: "Lead infrastructure migration by the 15th", priority: "high", due: "Jun 15" },
+        { owner: "Carol", task: "Assist with migration testing phase", priority: "medium", due: null },
+      ] : [],
+      topics: ["Infrastructure Migration", "Onboarding Flow", "Q3 Planning"].slice(0, Math.max(1, i-2)),
+      speaker_stats: { Alice: i*4, Bob: i*3, Carol: i*2 },
+      sentiment_flags: i > 5 ? [
+        { speaker: "Carol", sentiment: "confused", score: -0.3, text: "I'm a bit confused about the timeline for that one." },
+        { speaker: "Bob", sentiment: "positive", score: 0.7, text: "That would be great Carol, thank you!" },
+      ] : [],
+    });
+
+    setTimeout(tick, 1800);
+  }
+  tick();
+};
+
+function escHtml(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])
+  );
+}
+</script>
+</body>
+</html>

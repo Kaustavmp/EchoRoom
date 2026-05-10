@@ -1,0 +1,42 @@
+# EchoRoom v2 – Python dependencies
+# Install: pip install -r requirements.txt
+
+# ── Web framework ─────────────────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+pydantic==2.7.1
+websockets==12.0
+httpx==0.27.0
+
+# ── Browser automation (Meeting Bot Layer) ────────────────────────────────
+playwright==1.44.0
+# Note: after installing, run: playwright install chromium
+
+# ── Audio & transcription ─────────────────────────────────────────────────
+openai-whisper==20231117        # Whisper ASR
+ffmpeg-python==0.2.0            # Python bindings for ffmpeg
+
+# ── Speaker diarization (optional, needs HF token) ───────────────────────
+# pyannote.audio==3.3.2         # uncomment to enable diarization
+# torch>=2.0.0                  # required by pyannote
+
+# ── Intelligence / LLM layer ─────────────────────────────────────────────
+openai==1.30.1
+
+# ── RAG / Q&A ─────────────────────────────────────────────────────────────
+langchain==0.2.1
+langchain-community==0.2.1
+langchain-core==0.2.5
+faiss-cpu==1.8.0
+sentence-transformers==3.0.0
+
+# ── Utilities ─────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+aiofiles==23.2.1
+redis==5.0.4                    # for session state (optional)
+rich==13.7.1                    # pretty CLI output
+
+# ── Dev / testing ─────────────────────────────────────────────────────────
+pytest==8.2.0
+pytest-asyncio==0.23.7
+pytest-mock==3.14.0
