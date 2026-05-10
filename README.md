@@ -11,50 +11,7 @@ flags, and decisions — through a beautiful dashboard and REST API.
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        EchoRoom v2                              │
-│                                                                 │
-│  ┌──────────────────┐    ┌──────────────────┐                   │
-│  │  Layer 1: Bot    │    │  Layer 2: Audio  │                   │
-│  │  (Joining)       │    │  (Listening)     │                   │
-│  │                  │    │                  │                   │
-│  │  Playwright      │───▶│  ffmpeg loopback │                   │
-│  │  Stealth mode    │    │  Whisper ASR     │                   │
-│  │  Google Meet ✓   │    │  pyannote        │                   │
-│  │  Zoom Web ✓      │    │  (diarization)   │                   │
-│  │  MS Teams ✓      │    │                  │                   │
-│  │  DOM captions ✓  │    │  WAV chunks →    │                   │
-│  └──────────────────┘    │  TranscriptSegs  │                   │
-│          │               └────────┬─────────┘                   │
-│          │                        │                             │
-│          └────────────┬───────────┘                             │
-│                       ▼                                         │
-│           ┌───────────────────────┐                             │
-│           │  Layer 3: Intelligence│                             │
-│           │                       │                             │
-│           │  LiveAnalyser (GPT-4) │                             │
-│           │  Rolling window       │                             │
-│           │  → Summary            │                             │
-│           │  → Action items       │                             │
-│           │  → Sentiment flags    │                             │
-│           │  → Key decisions      │                             │
-│           │                       │                             │
-│           │  MeetingQA (RAG)      │                             │
-│           │  FAISS + sentence-    │                             │
-│           │  transformers         │                             │
-│           └───────────┬───────────┘                             │
-│                       │                                         │
-│           ┌───────────▼───────────┐                             │
-│           │  Layer 4: API +       │                             │
-│           │  Dashboard            │                             │
-│           │                       │                             │
-│           │  FastAPI REST         │                             │
-│           │  WebSocket stream     │                             │
-│           │  HTML Dashboard       │                             │
-│           └───────────────────────┘                             │
-└─────────────────────────────────────────────────────────────────┘
-```
+![EchoRoom Architecture](image.png)
 
 ---
 
