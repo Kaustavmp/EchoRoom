@@ -1,0 +1,10 @@
+streamlit
+pymongo
+python-dotenv
+transformers
+torch
+librosa
+langchain
+faiss-cpu
+openai
+tqdm
